@@ -13,7 +13,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   }
 
   return (
-    <GoogleOAuthProvider clientId={config.googleClientId}>
+    <GoogleOAuthProvider clientId={config.googleClientId} locale="en">
       {children}
     </GoogleOAuthProvider>
   );
