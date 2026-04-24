@@ -20,7 +20,7 @@ export function Header({ user }: HeaderProps) {
           <Image src="/assets/logo.svg" alt="Speecher" width={45} height={45} />
         </Link>
 
-        <Navigation className="flex items-center gap-4 text-base text-zinc-700 ml-3 mr-3" />
+        <Navigation className="flex items-center gap-4 text-base text-zinc-700 ml-3 mr-3" user={user} />
 
         <User className="ml-auto flex items-center text-zinc-700" user={user} />
       </div>

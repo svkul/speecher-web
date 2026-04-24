@@ -23,6 +23,7 @@ export function UserMenu({ fullName }: UserMenuProps) {
   const handleSignOut = async () => {
     try {
       await signOut();
+      router.replace("/");
       router.refresh();
     } catch {
       toast.error("Sign out failed");
