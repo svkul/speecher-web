@@ -3,18 +3,27 @@ import { getServerRequestContext } from "./request-context";
 
 interface ServerSpeechBlockResponse {
   id: string;
+  order: number;
+  title: string;
+  text: string;
+  audioUrl: string | null;
+  lines: {
+    line: number;
+    text: string;
+    timeSeconds: number | null;
+  }[];
 }
 
-export interface ServerSpeechResponse {
+export interface ServerSpeechDetailResponse {
   id: string;
   title: string;
   blocks: ServerSpeechBlockResponse[];
   updatedAt: string;
 }
 
-export const getSpeechesServer = async (): Promise<
-  ServerSpeechResponse[] | null
-> => {
+export const getSpeechServer = async (
+  id: string,
+): Promise<ServerSpeechDetailResponse | null> => {
   const context = await getServerRequestContext();
 
   if (!context) {
@@ -22,7 +31,7 @@ export const getSpeechesServer = async (): Promise<
   }
 
   const response = await fetch(
-    `${context.proto}://${context.host}/api/speeches`,
+      `${context.proto}://${context.host}/api/speeches/${id}`,
     {
       method: "GET",
       headers: {
@@ -41,5 +50,5 @@ export const getSpeechesServer = async (): Promise<
     return null;
   }
 
-  return (await response.json()) as ServerSpeechResponse[];
+  return (await response.json()) as ServerSpeechDetailResponse;
 };
