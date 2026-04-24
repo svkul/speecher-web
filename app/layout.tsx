@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner"
 
 import { Header } from "@/components/header/index";
 import { AppProviders } from "@/components/AppProviders";
-import { getCurrentUserServer } from "@/lib/auth/server";
+import { getCurrentUserServer } from "@/lib/server-api";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 

@@ -16,12 +16,21 @@ export function Navigation({ user, className }: NavigationProps) {
   return (
     <nav aria-label="Main navigation" className={className}>
       {user && (
-        <Link
-          href="/dashboard"
-          className={`hover:text-zinc-900 transition-colors font-bold text-lg ${pathname === "/dashboard" || pathname.startsWith('/dashboard/') ? "underline underline-offset-4 decoration-2" : ""}`}
-        >
-          Dashboard
-        </Link>
+        <>
+          <Link
+            href="/dashboard"
+            className={`hover:text-zinc-900 transition-colors font-bold text-lg ${pathname === "/dashboard" || pathname.startsWith('/dashboard/') ? "underline underline-offset-4 decoration-2" : ""}`}
+          >
+            Dashboard
+          </Link>
+
+          <Link
+            href="/records"
+            className={`hover:text-zinc-900 transition-colors font-bold text-lg ${pathname === "/records" || pathname.startsWith('/records/') ? "underline underline-offset-4 decoration-2" : ""}`}
+          >
+            Records
+          </Link>
+        </>
       )}
 
       <Link

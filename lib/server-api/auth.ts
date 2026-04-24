@@ -1,7 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { cookies } from "next/headers";
-import { headers } from "next/headers";
+import { getServerRequestContext } from "./request-context";
 
 export interface ServerUserResponse {
   id: string;
@@ -17,24 +16,23 @@ export interface ServerUserResponse {
 
 export const getCurrentUserServer = cache(
   async (): Promise<ServerUserResponse | null> => {
-    const cookieStore = await cookies();
-    const requestHeaders = await headers();
-    const cookieHeader = cookieStore.toString();
-    const host = requestHeaders.get("host");
-    const proto = requestHeaders.get("x-forwarded-proto") ?? "http";
+    const context = await getServerRequestContext();
 
-    if (!cookieHeader || !host) {
+    if (!context) {
       return null;
     }
 
-    const response = await fetch(`${proto}://${host}/api/user/me`, {
-      method: "GET",
-      headers: {
-        cookie: cookieHeader,
-        "x-language": "uk",
+    const response = await fetch(
+      `${context.proto}://${context.host}/api/user/me`,
+      {
+        method: "GET",
+        headers: {
+          cookie: context.cookieHeader,
+          "x-language": context.language,
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
+    );
 
     if (response.status === 401) {
       return null;

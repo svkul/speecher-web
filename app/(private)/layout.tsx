@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getCurrentUserServer } from "@/lib/auth/server";
+import { getCurrentUserServer } from "@/lib/server-api";
 
 interface PrivateLayoutProps {
   children: React.ReactNode;
