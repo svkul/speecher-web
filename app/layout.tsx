@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner"
 
-import { Header } from "@/components/Header";
+import { Header } from "@/components/header/index";
 import { AppProviders } from "@/components/AppProviders";
 import { getCurrentUserServer } from "@/lib/auth/server";
 import "./globals.css";
