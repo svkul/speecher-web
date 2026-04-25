@@ -1,6 +1,7 @@
 "use client"
 
-import * as React from "react"
+import * as React from "react";
+import { useState } from "react";
 import { Slider as SliderPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
@@ -13,6 +14,8 @@ function Slider({
   max = 100,
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
+  const [isThumbVisible, setIsThumbVisible] = useState(false);
+
   const _values = React.useMemo(
     () =>
       Array.isArray(value)
@@ -30,8 +33,10 @@ function Slider({
       value={value}
       min={min}
       max={max}
+      onMouseEnter={() => setIsThumbVisible(true)}
+      onMouseLeave={() => setIsThumbVisible(false)}
       className={cn(
-        "relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col",
+        "relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col py-1",
         className
       )}
       {...props}
@@ -45,11 +50,17 @@ function Slider({
           className="absolute bg-primary select-none data-horizontal:h-full data-vertical:w-full"
         />
       </SliderPrimitive.Track>
+
       {Array.from({ length: _values.length }, (_, index) => (
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="relative block size-3 shrink-0 rounded-none border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-1 focus-visible:ring-1 focus-visible:outline-hidden active:ring-1 disabled:pointer-events-none disabled:opacity-50"
+          onFocus={() => setIsThumbVisible(true)}
+          onBlur={() => setIsThumbVisible(false)}
+          className={cn(
+            "relative block size-3 shrink-0 rounded-2xl border border-white bg-primary ring-ring/50 transition-[color,box-shadow,opacity] select-none after:absolute after:-inset-2 hover:ring-1 focus-visible:ring-1 focus-visible:outline-hidden active:ring-1 disabled:pointer-events-none disabled:opacity-50",
+            !isThumbVisible && "opacity-0",
+          )}
         />
       ))}
     </SliderPrimitive.Root>
