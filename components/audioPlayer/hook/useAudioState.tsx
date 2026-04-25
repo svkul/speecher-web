@@ -10,6 +10,7 @@ export const useAudioState = (
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,10 @@ export const useAudioState = (
     };
     const onPause = () => setIsPlaying(false);
 
+    const onRateChange = () => {
+      setSpeed(audio.playbackRate);
+    };
+
     const onEnded = () => {
       onEndedCallback?.();
     };
@@ -44,6 +49,7 @@ export const useAudioState = (
     audio.addEventListener("pause", onPause);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("error", onError);
+    audio.addEventListener("ratechange", onRateChange);
 
     return () => {
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
@@ -52,6 +58,7 @@ export const useAudioState = (
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
+      audio.removeEventListener("ratechange", onRateChange);
     };
   }, [onEndedCallback, ref]);
 
@@ -60,6 +67,7 @@ export const useAudioState = (
     duration,
     progress,
     isPlaying,
+    speed,
     error,
   };
 };

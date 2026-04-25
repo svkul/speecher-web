@@ -1,10 +1,12 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import type { AudioElementHook } from "../types";
 
 export const useAudioElement = (
   ref: React.RefObject<HTMLAudioElement | null>
 ): AudioElementHook => {
+  const playbackRateRef = useRef(1);
+
   const play = useCallback(async () => {
     const audio = ref.current;
     if (!audio) return;
@@ -31,12 +33,23 @@ export const useAudioElement = (
     }
   }, [ref]);
 
+  const setSpeed = useCallback((speed: number) => {
+    playbackRateRef.current = speed;
+
+    const audio = ref.current;
+    if (!audio) return;
+
+    audio.playbackRate = speed;
+  }, [ref]);
+
   const setSrc = useCallback((url: string) => {
     const audio = ref.current;
     if (!audio) return;
 
     audio.src = url;
     audio.load();
+
+    audio.playbackRate = playbackRateRef.current;
   }, [ref]);
 
   useEffect(() => {
@@ -52,6 +65,7 @@ export const useAudioElement = (
   return {
     play,
     pause,
+    setSpeed,
     togglePlayPause,
     setSrc,
   };

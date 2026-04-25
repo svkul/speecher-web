@@ -14,7 +14,7 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string>(audioUrls[0] ?? "");
   const activeAudioUrl = audioUrls.includes(currentAudioUrl) ? currentAudioUrl : (audioUrls[0] ?? "");
 
-  const { play, togglePlayPause, setSrc } = useAudioElement(audioRef);
+  const { play, togglePlayPause, setSrc, setSpeed } = useAudioElement(audioRef);
   const currentTrackIndex = audioUrls.indexOf(activeAudioUrl);
   const previousAudioUrl = currentTrackIndex > 0 ? audioUrls[currentTrackIndex - 1] : null;
   const nextAudioUrl = currentTrackIndex >= 0 ? (audioUrls[currentTrackIndex + 1] ?? null) : null;
@@ -28,6 +28,8 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
     setCurrentAudioUrl(upcomingAudioUrl);
   }, [activeAudioUrl, audioUrls]);
 
+  const { isReady, duration, progress, error, isPlaying, speed } = useAudioState(audioRef, handleAudioEnded);
+
   const handlePreviousTrack = useCallback(() => {
     if (!previousAudioUrl) return;
     shouldAutoPlayNextRef.current = true;
@@ -39,8 +41,6 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
     shouldAutoPlayNextRef.current = true;
     setCurrentAudioUrl(nextAudioUrl);
   }, [nextAudioUrl]);
-
-  const { isReady, duration, progress, error, isPlaying } = useAudioState(audioRef, handleAudioEnded);
 
   useEffect(() => {
     if (!activeAudioUrl) return;
@@ -90,10 +90,12 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
           />
 
           <AudioControls
+            currentSpeed={speed}
             isPlaying={isPlaying}
             onTogglePlayPause={togglePlayPause}
             onPrevious={handlePreviousTrack}
             onNext={handleNextTrack}
+            onSpeedChange={setSpeed}
             isPreviousDisabled={!previousAudioUrl}
             isNextDisabled={!nextAudioUrl}
           />
