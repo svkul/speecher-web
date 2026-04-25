@@ -8,6 +8,13 @@ import type { AudioPlayerV2Props } from "./types";
 
 import { Slider } from "@/components/ui/slider";
 
+const formatTime = (seconds: number): string => {
+  const totalSeconds = Math.floor(seconds);
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
 
 export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -62,9 +69,10 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
         <div>Loading...</div>
       ) : (
         <section>
-          <div>{duration}</div>
-
-          <div>{progress}</div>
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>{formatTime(progress)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
 
           <Slider
             value={[progress]}
@@ -75,7 +83,7 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
                 audioRef.current.currentTime = value[0];
               }
             }}
-            className="mx-auto w-full max-w-xs"
+            className="mx-auto w-full"
           />
 
           <div className="flex gap-2">
