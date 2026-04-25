@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { formatDurationSeconds } from "@/lib/date";
+
 import { Slider } from "@/components/ui/slider";
 
 type AudioSliderProps = {
@@ -25,27 +27,34 @@ export const AudioSlider = ({ progress, duration, onSeekCommit }: AudioSliderPro
   }, []);
 
   return (
-    <Slider
-      value={[seekValue ?? progress]}
-      max={duration}
-      step={0.1}
-      onValueChange={(value) => {
-        setSeekValue(value[0]);
-      }}
-      onValueCommit={(value) => {
-        onSeekCommit(value[0]);
-        setSeekValue(value[0]);
+    <div>
+      <div className="flex items-center justify-between text-sm text-gray-500">
+        <span>{formatDurationSeconds(progress)}</span>
+        <span>{formatDurationSeconds(duration)}</span>
+      </div>
 
-        if (releaseSyncTimeoutRef.current) {
-          clearTimeout(releaseSyncTimeoutRef.current);
-        }
+      <Slider
+        value={[seekValue ?? progress]}
+        max={duration}
+        step={0.1}
+        onValueChange={(value) => {
+          setSeekValue(value[0]);
+        }}
+        onValueCommit={(value) => {
+          onSeekCommit(value[0]);
+          setSeekValue(value[0]);
 
-        releaseSyncTimeoutRef.current = setTimeout(() => {
-          setSeekValue(null);
-          releaseSyncTimeoutRef.current = null;
-        }, SEEK_SYNC_DELAY_MS);
-      }}
-      className="mx-auto w-full"
-    />
+          if (releaseSyncTimeoutRef.current) {
+            clearTimeout(releaseSyncTimeoutRef.current);
+          }
+
+          releaseSyncTimeoutRef.current = setTimeout(() => {
+            setSeekValue(null);
+            releaseSyncTimeoutRef.current = null;
+          }, SEEK_SYNC_DELAY_MS);
+        }}
+        className="mx-auto w-full"
+      />
+    </div>
   );
 };

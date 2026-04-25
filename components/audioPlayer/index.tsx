@@ -1,8 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { formatDurationSeconds } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { AudioControls } from "./components/AudioControls";
 import { AudioSlider } from "./components/AudioSlider";
 import { useAudioElement } from "./hook/useAudioElement";
 import { useAudioState } from "./hook/useAudioState";
@@ -15,15 +15,30 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
   const activeAudioUrl = audioUrls.includes(currentAudioUrl) ? currentAudioUrl : (audioUrls[0] ?? "");
 
   const { play, togglePlayPause, setSrc } = useAudioElement(audioRef);
+  const currentTrackIndex = audioUrls.indexOf(activeAudioUrl);
+  const previousAudioUrl = currentTrackIndex > 0 ? audioUrls[currentTrackIndex - 1] : null;
+  const nextAudioUrl = currentTrackIndex >= 0 ? (audioUrls[currentTrackIndex + 1] ?? null) : null;
 
   const handleAudioEnded = useCallback(() => {
     const currentIndex = audioUrls.indexOf(activeAudioUrl);
-    const nextAudioUrl = audioUrls[currentIndex + 1];
-    if (!nextAudioUrl) return;
+    const upcomingAudioUrl = audioUrls[currentIndex + 1];
+    if (!upcomingAudioUrl) return;
 
     shouldAutoPlayNextRef.current = true;
-    setCurrentAudioUrl(nextAudioUrl);
+    setCurrentAudioUrl(upcomingAudioUrl);
   }, [activeAudioUrl, audioUrls]);
+
+  const handlePreviousTrack = useCallback(() => {
+    if (!previousAudioUrl) return;
+    shouldAutoPlayNextRef.current = true;
+    setCurrentAudioUrl(previousAudioUrl);
+  }, [previousAudioUrl]);
+
+  const handleNextTrack = useCallback(() => {
+    if (!nextAudioUrl) return;
+    shouldAutoPlayNextRef.current = true;
+    setCurrentAudioUrl(nextAudioUrl);
+  }, [nextAudioUrl]);
 
   const { isReady, duration, progress, error, isPlaying } = useAudioState(audioRef, handleAudioEnded);
 
@@ -64,11 +79,6 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
         <div>Loading...</div>
       ) : (
         <section>
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>{formatDurationSeconds(progress)}</span>
-            <span>{formatDurationSeconds(duration)}</span>
-          </div>
-
           <AudioSlider
             progress={progress}
             duration={duration}
@@ -79,9 +89,14 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
             }}
           />
 
-          <div className="flex gap-2">
-            <button onClick={togglePlayPause}>{isPlaying ? "Pause" : "Play"}</button>
-          </div>
+          <AudioControls
+            isPlaying={isPlaying}
+            onTogglePlayPause={togglePlayPause}
+            onPrevious={handlePreviousTrack}
+            onNext={handleNextTrack}
+            isPreviousDisabled={!previousAudioUrl}
+            isNextDisabled={!nextAudioUrl}
+          />
         </section>
       )}
     </>
