@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import type { AudioElementHook } from "../types";
 
 export const useAudioElement = (
   ref: React.RefObject<HTMLAudioElement | null>
 ): AudioElementHook => {
-  const play = async () => {
+  const play = useCallback(async () => {
     const audio = ref.current;
     if (!audio) return;
 
@@ -14,13 +14,13 @@ export const useAudioElement = (
     } catch (e) {
       console.error("Play error:", e);
     }
-  };
+  }, [ref]);
 
-  const pause = () => {
+  const pause = useCallback(() => {
     ref.current?.pause();
-  };
+  }, [ref]);
 
-  const togglePlayPause = async () => {
+  const togglePlayPause = useCallback(async () => {
     const audio = ref.current;
     if (!audio) return;
 
@@ -29,15 +29,15 @@ export const useAudioElement = (
     } else {
       audio.pause();
     }
-  };
+  }, [ref]);
 
-  const setSrc = (url: string) => {
+  const setSrc = useCallback((url: string) => {
     const audio = ref.current;
     if (!audio) return;
 
     audio.src = url;
     audio.load();
-  };
+  }, [ref]);
 
   useEffect(() => {
     const audio = ref.current;

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { useAudioElement } from "./hook/useAudioElement";
@@ -11,14 +11,34 @@ import { Slider } from "@/components/ui/slider";
 
 export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [currentAudioUrl, setCurrentAudioUrl] = useState<string>(audioUrls[0]);
+  const shouldAutoPlayNextRef = useRef(false);
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string>(audioUrls[0] ?? "");
 
-  const { togglePlayPause, setSrc } = useAudioElement(audioRef);
-  const { isReady, duration, progress, error, isPlaying } = useAudioState(audioRef);
+  const { play, togglePlayPause, setSrc } = useAudioElement(audioRef);
+
+  const handleAudioEnded = useCallback(() => {
+    const currentIndex = audioUrls.indexOf(currentAudioUrl);
+    const nextAudioUrl = audioUrls[currentIndex + 1];
+    if (!nextAudioUrl) return;
+
+    shouldAutoPlayNextRef.current = true;
+    setCurrentAudioUrl(nextAudioUrl);
+  }, [audioUrls, currentAudioUrl]);
+
+  const { isReady, duration, progress, error, isPlaying } = useAudioState(audioRef, handleAudioEnded);
 
   useEffect(() => {
+    if (!currentAudioUrl) return;
     setSrc(currentAudioUrl);
-  }, [currentAudioUrl]);
+    if (shouldAutoPlayNextRef.current) {
+      void play();
+      shouldAutoPlayNextRef.current = false;
+    }
+  }, [currentAudioUrl, play, setSrc]);
+
+  if (audioUrls.length === 0) {
+    return null;
+  }
 
   return (
     <>
@@ -49,11 +69,10 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
           <Slider
             value={[progress]}
             max={duration}
-            step={1}
+            step={.1}
             onValueChange={(value) => {
-              const newTime = (value[0] / 100) * duration;
               if (audioRef.current) {
-                audioRef.current.currentTime = newTime;
+                audioRef.current.currentTime = value[0];
               }
             }}
             className="mx-auto w-full max-w-xs"

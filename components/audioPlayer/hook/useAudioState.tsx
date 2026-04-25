@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import type { AudioState } from "../types";
 
 export const useAudioState = (
-  ref: React.RefObject<HTMLAudioElement | null>
+  ref: React.RefObject<HTMLAudioElement | null>,
+  onEndedCallback?: () => void
 ): AudioState => {
   const [isReady, setIsReady] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -24,12 +25,13 @@ export const useAudioState = (
       setProgress(audio.currentTime);
     };
 
-    const onPlay = () => setIsPlaying(true);
+    const onPlay = () => {
+      setIsPlaying(true);
+    };
     const onPause = () => setIsPlaying(false);
 
     const onEnded = () => {
-      setIsPlaying(false);
-      setProgress(0);
+      onEndedCallback?.();
     };
 
     const onError = () => {
@@ -51,7 +53,7 @@ export const useAudioState = (
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [ref]);
+  }, [onEndedCallback, ref]);
 
   return {
     isReady,
