@@ -1,20 +1,13 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { formatDurationSeconds } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { useAudioElement } from "./hook/useAudioElement";
 import { useAudioState } from "./hook/useAudioState";
 import type { AudioPlayerV2Props } from "./types";
 
 import { Slider } from "@/components/ui/slider";
-
-const formatTime = (seconds: number): string => {
-  const totalSeconds = Math.floor(seconds);
-  const minutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = totalSeconds % 60;
-
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-};
 
 export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -70,8 +63,8 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
       ) : (
         <section>
           <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>{formatTime(progress)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>{formatDurationSeconds(progress)}</span>
+            <span>{formatDurationSeconds(duration)}</span>
           </div>
 
           <Slider
