@@ -2,6 +2,7 @@
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { config } from "@/lib/config";
+import { TanstackProvider } from "@/components/TanstackProvider";
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -9,12 +10,14 @@ interface AppProvidersProps {
 
 export function AppProviders({ children }: AppProvidersProps) {
   if (!config.googleClientId) {
-    return <>{children}</>;
+    return <TanstackProvider>{children}</TanstackProvider>;
   }
 
   return (
-    <GoogleOAuthProvider clientId={config.googleClientId} locale="en">
-      {children}
-    </GoogleOAuthProvider>
+    <TanstackProvider>
+      <GoogleOAuthProvider clientId={config.googleClientId} locale="en">
+        {children}
+      </GoogleOAuthProvider>
+    </TanstackProvider>
   );
 }

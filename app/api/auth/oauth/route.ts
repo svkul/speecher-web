@@ -1,5 +1,5 @@
 import { config } from "@/lib/config";
-import { copySetCookieHeaders, getLanguageHeader } from "@/lib/auth/bff";
+import { copySetCookieHeaders, getLanguageHeader } from "@/lib/api/client/bff";
 
 export async function POST(request: Request) {
   const body = await request.text();

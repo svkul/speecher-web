@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import { UserResponse } from "@/lib/auth/types";
+import type { UserResponse } from "@/lib/api/client";
+
 import { User } from "@/components/header/user";
 import { Navigation } from "@/components/header/navigation";
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { ServerSpeechDetailResponse } from "@/lib/server-api";
+import type { ServerSpeechDetailResponse } from "@/lib/api/server";
+
 import { getCurrentPlayingLine } from "@/components/speech/getCurrentPlayingLine";
 
 interface SpeechBlocksListProps {
@@ -71,24 +72,23 @@ export function SpeechBlocksList({
                       }
                     }}
                     disabled={line.timeSeconds == null}
-                    className={`block w-full rounded px-2 py-1 text-left text-sm ${
-                      block.id === scrollTargetBlockId &&
+                    className={`block w-full rounded px-2 py-1 text-left text-sm ${block.id === scrollTargetBlockId &&
                       line.line ===
-                        getCurrentPlayingLine(
-                          block.lines
-                            .filter(
-                              (item): item is typeof item & { timeSeconds: number } =>
-                                item.timeSeconds != null,
-                            )
-                            .map((item) => ({
-                              line: item.line,
-                              timeSeconds: item.timeSeconds,
-                            })),
-                          scrollTargetTime,
-                        )
-                        ? "bg-zinc-200 font-medium text-black dark:bg-zinc-700 dark:text-zinc-100"
-                        : "text-zinc-700 dark:text-zinc-300"
-                    }`}
+                      getCurrentPlayingLine(
+                        block.lines
+                          .filter(
+                            (item): item is typeof item & { timeSeconds: number } =>
+                              item.timeSeconds != null,
+                          )
+                          .map((item) => ({
+                            line: item.line,
+                            timeSeconds: item.timeSeconds,
+                          })),
+                        scrollTargetTime,
+                      )
+                      ? "bg-zinc-200 font-medium text-black dark:bg-zinc-700 dark:text-zinc-100"
+                      : "text-zinc-700 dark:text-zinc-300"
+                      }`}
                   >
                     {line.text}
                   </button>

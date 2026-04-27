@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { UserResponse } from "@/lib/auth/types";
+import type { UserResponse } from "@/lib/api/client";
 
 interface NavigationProps {
   user: UserResponse | null;
@@ -25,10 +25,10 @@ export function Navigation({ user, className }: NavigationProps) {
           </Link>
 
           <Link
-            href="/records"
-            className={`hover:text-zinc-900 transition-colors font-bold text-lg ${pathname === "/records" || pathname.startsWith('/records/') ? "underline underline-offset-4 decoration-2" : ""}`}
+            href="/speeches"
+            className={`hover:text-zinc-900 transition-colors font-bold text-lg ${pathname === "/speeches" || pathname.startsWith('/speeches/') ? "underline underline-offset-4 decoration-2" : ""}`}
           >
-            Records
+            Speeches
           </Link>
         </>
       )}

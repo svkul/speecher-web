@@ -1,57 +1,42 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import {
+  generateSpeechAudioClient,
+  type GenerateSpeechAudioResponse,
+} from "@/lib/api/client";
 
-interface GenerateAudioResponse {
-  successCount: number;
-  failureCount: number;
-}
+import { Button } from "@/components/ui/button";
 
 interface GenerateAudioProps {
   speechId: string;
 }
 
 export function GenerateAudio({ speechId }: GenerateAudioProps) {
-  const router = useRouter();
-  const [isPending, setIsPending] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleGenerate = async () => {
-    setIsPending(true);
-
-    try {
-      const response = await fetch(`/api/speeches/${speechId}/generate-audio`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to generate audio");
-      }
-
-      const data = (await response.json()) as GenerateAudioResponse;
+  const mutation = useMutation({
+    mutationFn: (): Promise<GenerateSpeechAudioResponse> =>
+      generateSpeechAudioClient(speechId),
+    onSuccess: async (data) => {
       toast.success(
         `Audio generated: ${data.successCount} success, ${data.failureCount} failures`,
       );
-      router.refresh();
-    } catch (error) {
+      await queryClient.invalidateQueries({ queryKey: ["speech", speechId] });
+      await queryClient.invalidateQueries({ queryKey: ["speeches"] });
+    },
+    onError: (error) => {
       const message =
         error instanceof Error ? error.message : "Failed to generate audio";
       toast.error(message);
-    } finally {
-      setIsPending(false);
-    }
-  };
+    },
+  });
 
   return (
-    <Button onClick={handleGenerate} disabled={isPending}>
-      {isPending ? "Generating..." : "Generate Audio for All Blocks"}
+    <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+      {mutation.isPending ? "Generating..." : "Generate Audio for All Blocks"}
     </Button>
   );
 }

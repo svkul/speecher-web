@@ -3,8 +3,9 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 
+import type { UserResponse } from "@/lib/api/client";
+
 import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { UserResponse } from "@/lib/auth/types";
 import { Button } from "@/components/ui/button";
 
 const UserMenu = dynamic(

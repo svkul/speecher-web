@@ -1,18 +1,49 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+
+import type { AudioPlayerProps } from "./types";
 import { AudioControls } from "./components/AudioControls";
 import { AudioSlider } from "./components/AudioSlider";
 import { useAudioElement } from "./hook/useAudioElement";
 import { useAudioState } from "./hook/useAudioState";
-import type { AudioPlayerV2Props } from "./types";
+import { AudioText } from "./components/AudioText";
 
-export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
+const getActiveLineNumber = (
+  lines: { line: number; timeSeconds: number | null }[],
+  progress: number,
+): number | null => {
+  if (lines.length === 0) {
+    return null;
+  }
+
+  let low = 0;
+  let high = lines.length - 1;
+  let activeIndex = -1;
+
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    const lineTime = lines[middle]?.timeSeconds;
+
+    if (lineTime == null || lineTime > progress) {
+      high = middle - 1;
+      continue;
+    }
+
+    activeIndex = middle;
+    low = middle + 1;
+  }
+
+  return activeIndex >= 0 ? lines[activeIndex]?.line ?? null : null;
+};
+
+export const AudioPlayer = ({ speechId, audioUrls, blocks }: AudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const shouldAutoPlayNextRef = useRef(false);
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string>(audioUrls[0] ?? "");
   const activeAudioUrl = audioUrls.includes(currentAudioUrl) ? currentAudioUrl : (audioUrls[0] ?? "");
+  const activeBlock = blocks.find((block) => block.audioUrl === activeAudioUrl) ?? null;
 
   const { play, togglePlayPause, setSrc, setSpeed } = useAudioElement(audioRef);
   const currentTrackIndex = audioUrls.indexOf(activeAudioUrl);
@@ -53,9 +84,13 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
     }
   }, [activeAudioUrl, play, setSrc]);
 
-  if (audioUrls.length === 0) {
-    return null;
-  }
+  const activeLineNumber = useMemo(() => {
+    if (!activeBlock) {
+      return null;
+    }
+
+    return getActiveLineNumber(activeBlock.lines, progress);
+  }, [activeBlock, progress]);
 
   return (
     <>
@@ -71,13 +106,25 @@ export const AudioPlayerV2 = ({ audioUrls }: AudioPlayerV2Props) => {
         </ul>
       </div>
 
+      {blocks.map((block) => (
+        <AudioText
+          key={block.id}
+          speechId={speechId}
+          block={block}
+          isActiveBlock={block.id === activeBlock?.id}
+          activeLineNumber={block.id === activeBlock?.id ? activeLineNumber : null}
+        />
+      ))}
+
       <audio ref={audioRef} />
 
-      {error && <div>{error.message}</div>}
+      {error && audioUrls.length > 0 && <div>{error.message}</div>}
 
-      {!isReady ? (
+      {!isReady && audioUrls.length > 0 && (
         <div>Loading...</div>
-      ) : (
+      )}
+
+      {isReady && audioUrls.length > 0 && (
         <section>
           <AudioSlider
             progress={progress}

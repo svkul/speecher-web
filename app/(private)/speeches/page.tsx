@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getSpeechesServer } from "@/lib/server-api";
+import { getSpeechesServer } from "@/lib/api/server";
 
 export default async function Records() {
   const speeches = await getSpeechesServer();
@@ -10,7 +10,7 @@ export default async function Records() {
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-6 py-12 px-6 bg-white dark:bg-black sm:px-16">
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
           <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Records
+            Speeches
           </h1>
 
           <section className="w-full">
@@ -29,7 +29,7 @@ export default async function Records() {
                     key={speech.id}
                     className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
                   >
-                    <Link href={`/records/${speech.id}`}>
+                    <Link href={`/speeches/${speech.id}`}>
                       <h2 className="text-base font-medium text-black dark:text-zinc-100">
                         {speech.title}
                       </h2>

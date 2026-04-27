@@ -5,6 +5,8 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+import { signInWithGoogle } from "@/lib/api/client";
+
 import {
   Dialog,
   DialogContent,
@@ -12,8 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-import { signInWithGoogle } from "@/lib/auth/sign-in";
 
 interface LoginDialogProps {
   open: boolean;

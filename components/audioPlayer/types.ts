@@ -1,6 +1,16 @@
-export interface AudioPlayerV2Props {
+import type { ServerSpeechBlockResponse } from "@/lib/api/server";
+export interface AudioPlayerProps {
+  speechId: string;
   audioUrls: string[];
+  blocks: ServerSpeechBlockResponse[];
 }
+
+export type AudioTextProps = {
+  speechId: string;
+  block: ServerSpeechBlockResponse;
+  isActiveBlock: boolean;
+  activeLineNumber: number | null;
+};
 
 export type AudioElementHook = {
   play: () => Promise<void>;

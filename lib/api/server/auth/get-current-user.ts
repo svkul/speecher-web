@@ -1,6 +1,5 @@
 import "server-only";
-import { cache } from "react";
-import { getServerRequestContext } from "./request-context";
+import { getServerRequestContext } from "../request-context";
 
 export interface ServerUserResponse {
   id: string;
@@ -14,7 +13,8 @@ export interface ServerUserResponse {
   updatedAt: string;
 }
 
-export const getCurrentUserServer = cache(
+// export const getCurrentUserServer = cache(
+export const getCurrentUserServer =
   async (): Promise<ServerUserResponse | null> => {
     const context = await getServerRequestContext();
 
@@ -43,5 +43,4 @@ export const getCurrentUserServer = cache(
     }
 
     return (await response.json()) as ServerUserResponse;
-  },
-);
+  };

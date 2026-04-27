@@ -1,5 +1,5 @@
 import { config } from "@/lib/config";
-import { copySetCookieHeaders, getLanguageHeader } from "@/lib/auth/bff";
+import { copySetCookieHeaders, getLanguageHeader } from "@/lib/api/client/bff";
 
 interface RouteContext {
   params: Promise<{ id: string }>;

@@ -2,23 +2,21 @@ import { config } from "@/lib/config";
 import { copySetCookieHeaders, getLanguageHeader } from "@/lib/api/client/bff";
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: Promise<{ blockId: string }>;
 }
 
-export async function POST(request: Request, { params }: RouteContext) {
-  const { id } = await params;
+export async function DELETE(request: Request, { params }: RouteContext) {
+  const { blockId } = await params;
 
   const upstreamResponse = await fetch(
-    `${config.apiBaseUrl}/speeches/${id}/generate-audio`,
+    `${config.apiBaseUrl}/speeches/blocks/${blockId}/audio`,
     {
-      method: "POST",
+      method: "DELETE",
       headers: {
-        "content-type": "application/json",
         "x-client-type": config.clientType,
         "x-language": getLanguageHeader(request),
         cookie: request.headers.get("cookie") ?? "",
       },
-      body: request.body ?? null,
       cache: "no-store",
     },
   );

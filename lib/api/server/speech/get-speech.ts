@@ -1,7 +1,7 @@
 import "server-only";
-import { getServerRequestContext } from "./request-context";
+import { getServerRequestContext } from "../request-context";
 
-interface ServerSpeechBlockResponse {
+export interface ServerSpeechBlockResponse {
   id: string;
   order: number;
   title: string;
@@ -31,14 +31,16 @@ export const getSpeechServer = async (
   }
 
   const response = await fetch(
-      `${context.proto}://${context.host}/api/speeches/${id}`,
+    `${context.proto}://${context.host}/api/speeches/${id}`,
     {
       method: "GET",
       headers: {
         cookie: context.cookieHeader,
         "x-language": context.language,
       },
-      cache: "no-store",
+      next: {
+        tags: [`speech-${id}`],
+      },
     },
   );
 

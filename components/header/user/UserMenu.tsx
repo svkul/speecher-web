@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { signOut } from "@/lib/auth/sign-out";
+import { signOut } from "@/lib/api/client";
 
 import {
   DropdownMenuContent,

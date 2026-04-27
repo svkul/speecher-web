@@ -1,5 +1,5 @@
 import "server-only";
-import { getServerRequestContext } from "./request-context";
+import { getServerRequestContext } from "../request-context";
 
 interface ServerSpeechBlockResponse {
   id: string;
@@ -29,7 +29,9 @@ export const getSpeechesServer = async (): Promise<
         cookie: context.cookieHeader,
         "x-language": context.language,
       },
-      cache: "no-store",
+      next: {
+        tags: ["speeches"],
+      },
     },
   );
 

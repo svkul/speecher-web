@@ -1,4 +1,5 @@
-import { getSpeechServer } from "@/lib/server-api";
+import { getSpeechServer } from "@/lib/api/server";
+
 import { SpeechDetailClient } from "@/components/speech/SpeechDetailClient";
 
 interface RecordPageProps {

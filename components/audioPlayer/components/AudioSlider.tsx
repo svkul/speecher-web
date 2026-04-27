@@ -28,33 +28,34 @@ export const AudioSlider = ({ progress, duration, onSeekCommit }: AudioSliderPro
 
   return (
     <div>
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-sm text-gray-500 gap-2">
         <span>{formatDurationSeconds(progress)}</span>
+
+        <Slider
+          value={[seekValue ?? progress]}
+          max={duration}
+          step={0.1}
+          onValueChange={(value) => {
+            setSeekValue(value[0]);
+          }}
+          onValueCommit={(value) => {
+            onSeekCommit(value[0]);
+            setSeekValue(value[0]);
+
+            if (releaseSyncTimeoutRef.current) {
+              clearTimeout(releaseSyncTimeoutRef.current);
+            }
+
+            releaseSyncTimeoutRef.current = setTimeout(() => {
+              setSeekValue(null);
+              releaseSyncTimeoutRef.current = null;
+            }, SEEK_SYNC_DELAY_MS);
+          }}
+          className="mx-auto w-full"
+        />
+
         <span>{formatDurationSeconds(duration)}</span>
       </div>
-
-      <Slider
-        value={[seekValue ?? progress]}
-        max={duration}
-        step={0.1}
-        onValueChange={(value) => {
-          setSeekValue(value[0]);
-        }}
-        onValueCommit={(value) => {
-          onSeekCommit(value[0]);
-          setSeekValue(value[0]);
-
-          if (releaseSyncTimeoutRef.current) {
-            clearTimeout(releaseSyncTimeoutRef.current);
-          }
-
-          releaseSyncTimeoutRef.current = setTimeout(() => {
-            setSeekValue(null);
-            releaseSyncTimeoutRef.current = null;
-          }, SEEK_SYNC_DELAY_MS);
-        }}
-        className="mx-auto w-full"
-      />
     </div>
   );
 };
