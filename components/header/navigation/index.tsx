@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import type { UserResponse } from "@/lib/api/client";
-
+import type { UserResponse } from "@/feature/user";
 interface NavigationProps {
   user: UserResponse | null;
   className?: string;

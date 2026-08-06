@@ -1,7 +1,6 @@
 "use client";
 
 import { useClerk } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -18,16 +17,11 @@ interface UserMenuProps {
 
 export function UserMenu({ fullName }: UserMenuProps) {
   const { signOut } = useClerk();
-  const router = useRouter();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut({ redirectUrl: "/" });
-      router.replace("/");
-      router.refresh();
-    } catch {
+  const handleSignOut = () => {
+    void signOut({ redirectUrl: "/sign-in" }).catch(() => {
       toast.error("Sign out failed");
-    }
+    });
   };
 
   return (
@@ -39,9 +33,7 @@ export function UserMenu({ fullName }: UserMenuProps) {
       <DropdownMenuSeparator />
 
       <DropdownMenuGroup>
-        <DropdownMenuItem onClick={() => void handleSignOut()}>
-          Log out
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSignOut}>Log out</DropdownMenuItem>
       </DropdownMenuGroup>
     </DropdownMenuContent>
   );

@@ -3,7 +3,7 @@ import { Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { deleteSpeechBlockAudioClient } from "@/lib/api/client";
+import { deleteSpeechBlockAudioAction } from "@/feature/speech/actions/delete-speech-block-audio-action";
 import type { AudioTextProps } from "../types";
 
 import { cn } from "@/lib/utils";
@@ -14,7 +14,13 @@ export const AudioText = memo(({ speechId, block, isActiveBlock, activeLineNumbe
   const queryClient = useQueryClient();
 
   const deleteAudioMutation = useMutation({
-    mutationFn: () => deleteSpeechBlockAudioClient(block.id),
+    mutationFn: async () => {
+      const result = await deleteSpeechBlockAudioAction(speechId, block.id);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+    },
     onSuccess: async () => {
       toast.success("Audio file deleted");
       await queryClient.invalidateQueries({ queryKey: ["speech", speechId] });

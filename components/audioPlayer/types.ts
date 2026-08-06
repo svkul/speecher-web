@@ -1,13 +1,14 @@
-import type { ServerSpeechBlockResponse } from "@/lib/api/server";
+import type { SpeechBlockResponse } from "@/feature/speech/api/get-speech";
+
 export interface AudioPlayerProps {
   speechId: string;
   audioUrls: string[];
-  blocks: ServerSpeechBlockResponse[];
+  blocks: SpeechBlockResponse[];
 }
 
 export type AudioTextProps = {
   speechId: string;
-  block: ServerSpeechBlockResponse;
+  block: SpeechBlockResponse;
   isActiveBlock: boolean;
   activeLineNumber: number | null;
 };

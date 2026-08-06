@@ -1,0 +1,28 @@
+import type { ApiClient } from "@/shared/api";
+
+export interface SpeechBlockResponse {
+  id: string;
+  order: number;
+  title: string;
+  text: string;
+  audioUrl: string | null;
+  lines: {
+    line: number;
+    text: string;
+    timeSeconds: number | null;
+  }[];
+}
+
+export interface SpeechDetailResponse {
+  id: string;
+  title: string;
+  blocks: SpeechBlockResponse[];
+  updatedAt: string;
+}
+
+export function getSpeech(
+  api: ApiClient,
+  speechId: string,
+): Promise<SpeechDetailResponse> {
+  return api.get<SpeechDetailResponse>(`/speeches/${speechId}`);
+}

@@ -1,7 +1,8 @@
-import { getSpeechServer } from "@/lib/api/server";
-
-import { SpeechHeader } from "@/components/speech/header";
-import { SpeechDetailClient } from "@/components/speech/SpeechDetailClient";
+import {
+  getSpeechServer,
+  SpeechDetailClient,
+  SpeechHeader,
+} from "@/feature/speech";
 
 interface RecordPageProps {
   params: Promise<{ id: string }>;

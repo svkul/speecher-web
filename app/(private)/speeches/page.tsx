@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getSpeechesServer } from "@/lib/api/server";
+import { getSpeechesServer } from "@/feature/speech";
 
 export default async function Records() {
   const speeches = await getSpeechesServer();
