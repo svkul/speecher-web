@@ -1,7 +1,6 @@
 "use client";
 
-import { GoogleOAuthProvider } from "@react-oauth/google";
-import { config } from "@/lib/config";
+import { ClerkProvider } from "@clerk/nextjs";
 import { TanstackProvider } from "@/components/TanstackProvider";
 
 interface AppProvidersProps {
@@ -9,15 +8,9 @@ interface AppProvidersProps {
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
-  if (!config.googleClientId) {
-    return <TanstackProvider>{children}</TanstackProvider>;
-  }
-
   return (
-    <TanstackProvider>
-      <GoogleOAuthProvider clientId={config.googleClientId} locale="en">
-        {children}
-      </GoogleOAuthProvider>
-    </TanstackProvider>
+    <ClerkProvider>
+      <TanstackProvider>{children}</TanstackProvider>
+    </ClerkProvider>
   );
 }

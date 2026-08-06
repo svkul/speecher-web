@@ -1,5 +1,4 @@
-import { config } from "@/lib/config";
-import { copySetCookieHeaders, getLanguageHeader } from "@/lib/api/client/bff";
+import { fetchBffUpstream } from "@/lib/api/server/bff-upstream";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -8,27 +7,37 @@ interface RouteContext {
 export async function GET(request: Request, { params }: RouteContext) {
   const { id } = await params;
 
-  const upstreamResponse = await fetch(`${config.apiBaseUrl}/speeches/${id}`, {
+  const upstreamResponse = await fetchBffUpstream(request, `/speeches/${id}`, {
     method: "GET",
-    headers: {
-      "x-client-type": config.clientType,
-      "x-language": getLanguageHeader(request),
-      cookie: request.headers.get("cookie") ?? "",
-    },
-    cache: "no-store",
   });
 
   const responseBody = await upstreamResponse.text();
 
-  const response = new Response(responseBody, {
+  return new Response(responseBody, {
     status: upstreamResponse.status,
     headers: {
       "content-type":
         upstreamResponse.headers.get("content-type") ?? "application/json",
     },
   });
+}
 
-  copySetCookieHeaders(upstreamResponse.headers, response);
+export async function DELETE(request: Request, { params }: RouteContext) {
+  const { id } = await params;
 
-  return response;
+  const upstreamResponse = await fetchBffUpstream(request, `/speeches/${id}`, {
+    method: "DELETE",
+  });
+
+  if ([204, 205, 304].includes(upstreamResponse.status)) {
+    return new Response(null, { status: upstreamResponse.status });
+  }
+
+  return new Response(await upstreamResponse.text(), {
+    status: upstreamResponse.status,
+    headers: {
+      "content-type":
+        upstreamResponse.headers.get("content-type") ?? "application/json",
+    },
+  });
 }

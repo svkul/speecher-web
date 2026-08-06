@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 import type { UserResponse } from "@/lib/api/client";
 
@@ -15,25 +16,19 @@ const UserMenu = dynamic(
   },
 );
 
-const LoginDialog = dynamic(
-  () => import("@/components/header/user/LoginDialog").then((module) => module.LoginDialog),
-  {
-    ssr: false,
-  },
-);
-
 interface UserProps {
   className?: string;
   user: UserResponse | null;
 }
 
 export function User({ className, user }: UserProps) {
-  const userInitials = (user?.firstName?.slice(0, 1).toUpperCase() || "") + (user?.lastName?.slice(0, 1).toUpperCase() || "");
+  const userInitials =
+    (user?.firstName?.slice(0, 1).toUpperCase() || "") +
+    (user?.lastName?.slice(0, 1).toUpperCase() || "");
   const userLabel = userInitials || user?.email || "Guest";
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isUserMenuEnabled, setIsUserMenuEnabled] = useState(false);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
   const preloadUserMenu = () => {
     void import("@/components/header/user/UserMenu");
@@ -71,14 +66,9 @@ export function User({ className, user }: UserProps) {
 
   return (
     <div className={className}>
-      <Button variant="outline" type="button" onClick={() => setIsLoginDialogOpen(true)}>Login</Button>
-
-      {isLoginDialogOpen ? (
-        <LoginDialog
-          open={isLoginDialogOpen}
-          onOpenChange={setIsLoginDialogOpen}
-        />
-      ) : null}
+      <Button variant="outline" type="button" asChild>
+        <Link href="/sign-in">Login</Link>
+      </Button>
     </div>
   );
 }

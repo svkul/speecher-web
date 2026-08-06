@@ -1,4 +1,5 @@
-export { deleteSpeechBlockAudioClient } from "./speech/delete-speech-block";
+export { deleteSpeechBlockAudioClient } from "./speech/delete-speech-block-audio";
+export { deleteSpeechClient } from "./speech/delete-speech";
 
 export type { GenerateSpeechAudioResponse } from "./speech/generate-speech-audio";
 export { generateSpeechAudioClient } from "./speech/generate-speech-audio";
@@ -9,6 +10,4 @@ export type {
 } from "./speech/get-speech";
 export { getSpeechClient } from "./speech/get-speech";
 
-export type { UserResponse, OAuthSignInResponse } from "./auth/types";
-export { signInWithGoogle } from "./auth/sign-in";
-export { signOut } from "./auth/sign-out";
+export type { UserResponse } from "./auth/types";

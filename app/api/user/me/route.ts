@@ -1,28 +1,17 @@
-import { config } from "@/lib/config";
-import { copySetCookieHeaders, getLanguageHeader } from "@/lib/api/client/bff";
+import { fetchBffUpstream } from "@/lib/api/server/bff-upstream";
 
 export async function GET(request: Request) {
-  const upstreamResponse = await fetch(`${config.apiBaseUrl}/user/me`, {
+  const upstreamResponse = await fetchBffUpstream(request, "/user/me", {
     method: "GET",
-    headers: {
-      "x-client-type": config.clientType,
-      "x-language": getLanguageHeader(request),
-      cookie: request.headers.get("cookie") ?? "",
-    },
-    cache: "no-store",
   });
 
   const responseBody = await upstreamResponse.text();
 
-  const response = new Response(responseBody, {
+  return new Response(responseBody, {
     status: upstreamResponse.status,
     headers: {
       "content-type":
         upstreamResponse.headers.get("content-type") ?? "application/json",
     },
   });
-
-  copySetCookieHeaders(upstreamResponse.headers, response);
-
-  return response;
 }

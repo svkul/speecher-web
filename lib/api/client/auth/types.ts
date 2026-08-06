@@ -9,9 +9,3 @@ export interface UserResponse {
   createdAt: string;
   updatedAt: string;
 }
-
-export interface OAuthSignInResponse {
-  user: UserResponse;
-  accessToken: string;
-  refreshToken: string;
-}

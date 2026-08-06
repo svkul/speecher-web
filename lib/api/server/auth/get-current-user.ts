@@ -1,5 +1,6 @@
 import "server-only";
-import { getServerRequestContext } from "../request-context";
+
+import { backendFetch } from "../backend-fetch";
 
 export interface ServerUserResponse {
   id: string;
@@ -13,26 +14,9 @@ export interface ServerUserResponse {
   updatedAt: string;
 }
 
-// export const getCurrentUserServer = cache(
 export const getCurrentUserServer =
   async (): Promise<ServerUserResponse | null> => {
-    const context = await getServerRequestContext();
-
-    if (!context) {
-      return null;
-    }
-
-    const response = await fetch(
-      `${context.proto}://${context.host}/api/user/me`,
-      {
-        method: "GET",
-        headers: {
-          cookie: context.cookieHeader,
-          "x-language": context.language,
-        },
-        cache: "no-store",
-      },
-    );
+    const response = await backendFetch("/user/me", { method: "GET" });
 
     if (response.status === 401) {
       return null;

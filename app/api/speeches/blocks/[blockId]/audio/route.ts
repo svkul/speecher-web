@@ -1,5 +1,4 @@
-import { config } from "@/lib/config";
-import { copySetCookieHeaders, getLanguageHeader } from "@/lib/api/client/bff";
+import { fetchBffUpstream } from "@/lib/api/server/bff-upstream";
 
 interface RouteContext {
   params: Promise<{ blockId: string }>;
@@ -8,30 +7,23 @@ interface RouteContext {
 export async function DELETE(request: Request, { params }: RouteContext) {
   const { blockId } = await params;
 
-  const upstreamResponse = await fetch(
-    `${config.apiBaseUrl}/speeches/blocks/${blockId}/audio`,
+  const upstreamResponse = await fetchBffUpstream(
+    request,
+    `/speeches/blocks/${blockId}/audio`,
     {
       method: "DELETE",
-      headers: {
-        "x-client-type": config.clientType,
-        "x-language": getLanguageHeader(request),
-        cookie: request.headers.get("cookie") ?? "",
-      },
-      cache: "no-store",
     },
   );
 
-  const responseBody = await upstreamResponse.text();
+  if ([204, 205, 304].includes(upstreamResponse.status)) {
+    return new Response(null, { status: upstreamResponse.status });
+  }
 
-  const response = new Response(responseBody, {
+  return new Response(await upstreamResponse.text(), {
     status: upstreamResponse.status,
     headers: {
       "content-type":
         upstreamResponse.headers.get("content-type") ?? "application/json",
     },
   });
-
-  copySetCookieHeaders(upstreamResponse.headers, response);
-
-  return response;
 }

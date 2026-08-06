@@ -1,16 +1,15 @@
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-
-import { getCurrentUserServer } from "@/lib/api/server";
 
 interface PrivateLayoutProps {
   children: React.ReactNode;
 }
 
 export default async function PrivateLayout({ children }: PrivateLayoutProps) {
-  const user = await getCurrentUserServer();
+  const { isAuthenticated } = await auth();
 
-  if (!user) {
-    redirect("/");
+  if (!isAuthenticated) {
+    redirect("/sign-in");
   }
 
   return <>{children}</>;

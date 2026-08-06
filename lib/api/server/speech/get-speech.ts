@@ -1,5 +1,6 @@
 import "server-only";
-import { getServerRequestContext } from "../request-context";
+
+import { backendFetch } from "../backend-fetch";
 
 export interface ServerSpeechBlockResponse {
   id: string;
@@ -24,25 +25,12 @@ export interface ServerSpeechDetailResponse {
 export const getSpeechServer = async (
   id: string,
 ): Promise<ServerSpeechDetailResponse | null> => {
-  const context = await getServerRequestContext();
-
-  if (!context) {
-    return null;
-  }
-
-  const response = await fetch(
-    `${context.proto}://${context.host}/api/speeches/${id}`,
-    {
-      method: "GET",
-      headers: {
-        cookie: context.cookieHeader,
-        "x-language": context.language,
-      },
-      next: {
-        tags: [`speech-${id}`],
-      },
+  const response = await backendFetch(`/speeches/${id}`, {
+    method: "GET",
+    next: {
+      tags: [`speech-${id}`],
     },
-  );
+  });
 
   if (response.status === 401) {
     return null;
