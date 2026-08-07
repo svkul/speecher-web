@@ -4,7 +4,7 @@ import type { AudioState } from "../types";
 
 export const useAudioState = (
   ref: React.RefObject<HTMLAudioElement | null>,
-  onEndedCallback?: () => void
+  onEndedCallback?: () => void,
 ): AudioState => {
   const [isReady, setIsReady] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -17,9 +17,22 @@ export const useAudioState = (
     const audio = ref.current;
     if (!audio) return;
 
+    const onLoadStart = () => {
+      // Reset immediately so highlight doesn't keep the previous track's progress
+      setIsReady(false);
+      setProgress(0);
+      setDuration(0);
+      setError(null);
+    };
+
     const onLoadedMetadata = () => {
       setDuration(audio.duration || 0);
+      setProgress(audio.currentTime || 0);
       setIsReady(true);
+    };
+
+    const onSeeked = () => {
+      setProgress(audio.currentTime || 0);
     };
 
     const onTimeUpdate = () => {
@@ -43,7 +56,9 @@ export const useAudioState = (
       setError(new Error("Audio failed"));
     };
 
+    audio.addEventListener("loadstart", onLoadStart);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
+    audio.addEventListener("seeked", onSeeked);
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
@@ -52,7 +67,9 @@ export const useAudioState = (
     audio.addEventListener("ratechange", onRateChange);
 
     return () => {
+      audio.removeEventListener("loadstart", onLoadStart);
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("seeked", onSeeked);
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);

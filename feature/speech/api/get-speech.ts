@@ -16,6 +16,10 @@ export interface SpeechBlockResponse {
 export interface SpeechDetailResponse {
   id: string;
   title: string;
+  ttsLanguage: string | null;
+  ttsVoice: string | null;
+  ttsModel: string | null;
+  ttsStyle: string | null;
   blocks: SpeechBlockResponse[];
   updatedAt: string;
 }

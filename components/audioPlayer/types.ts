@@ -11,6 +11,7 @@ export type AudioTextProps = {
   block: SpeechBlockResponse;
   isActiveBlock: boolean;
   activeLineNumber: number | null;
+  onLineClick?: (blockId: string, lineNumber: number) => void;
 };
 
 export type AudioElementHook = {
