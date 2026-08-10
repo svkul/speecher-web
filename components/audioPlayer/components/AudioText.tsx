@@ -1,78 +1,63 @@
-import { memo } from "react";
-import { Trash2 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { memo, useEffect, useRef } from "react";
 
-import { deleteSpeechBlockAudioAction } from "@/feature/speech/actions/delete-speech-block-audio-action";
 import type { AudioTextProps } from "../types";
 
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
-
 export const AudioText = memo(
   ({
-    speechId,
     block,
     isActiveBlock,
     activeLineNumber,
     onLineClick,
   }: AudioTextProps) => {
-    const queryClient = useQueryClient();
+    const activeLineRef = useRef<HTMLButtonElement | null>(null);
 
-    const deleteAudioMutation = useMutation({
-      mutationFn: async () => {
-        const result = await deleteSpeechBlockAudioAction(speechId, block.id);
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-      },
-      onSuccess: async () => {
-        toast.success("Audio file deleted");
-        await queryClient.invalidateQueries({ queryKey: ["speech", speechId] });
-        await queryClient.invalidateQueries({ queryKey: ["speeches"] });
-      },
-      onError: (error) => {
-        const message =
-          error instanceof Error ? error.message : "Failed to delete audio";
-        toast.error(message);
-      },
-    });
+    useEffect(() => {
+      if (!isActiveBlock || activeLineNumber == null) return;
+      activeLineRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }, [activeLineNumber, isActiveBlock]);
 
     if (block.lines.length === 0) {
       return (
-        <p className="text-sm text-gray-600 whitespace-pre-wrap">{block.text}</p>
+        <section
+          className={cn(
+            "space-y-1 rounded-md px-1 py-1",
+            isActiveBlock && "bg-zinc-50 dark:bg-zinc-900/40",
+          )}
+        >
+          <h2 className="text-sm text-gray-600 whitespace-pre-wrap">
+            {block.title}
+          </h2>
+          <p className="text-sm text-gray-600 whitespace-pre-wrap">{block.text}</p>
+        </section>
       );
     }
 
     return (
-      <section className="space-y-1">
-        <header className="flex items-center justify-between">
-          <h2 className="text-sm text-gray-600 whitespace-pre-wrap">
-            {block.title}
-          </h2>
-
-          {block.audioUrl && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => deleteAudioMutation.mutate()}
-              disabled={deleteAudioMutation.isPending}
-            >
-              <Trash2 size={20} />
-            </Button>
-          )}
-        </header>
+      <section
+        className={cn(
+          "space-y-1 rounded-md px-1 py-1",
+          isActiveBlock && "bg-zinc-50 dark:bg-zinc-900/40",
+        )}
+      >
+        <h2 className="text-sm text-gray-600 whitespace-pre-wrap">
+          {block.title}
+        </h2>
 
         {block.lines.map((line) => {
           const isActiveLine = isActiveBlock && activeLineNumber === line.line;
-          const canSeek = line.timeSeconds != null && Boolean(block.audioUrl);
+          const canSeek =
+            Boolean(block.audioUrl) && line.text.trim().length > 0;
 
           return (
             <button
               type="button"
               key={line.line}
+              ref={isActiveLine ? activeLineRef : undefined}
               disabled={!canSeek}
               onClick={() => {
                 if (!canSeek) return;
@@ -80,10 +65,11 @@ export const AudioText = memo(
               }}
               className={cn(
                 "block w-full rounded px-1 py-0.5 text-left text-sm whitespace-pre-wrap transition-colors",
-                canSeek && "cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900",
+                canSeek &&
+                  "cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900",
                 !canSeek && "cursor-default opacity-80",
                 isActiveLine
-                  ? "text-blue-600 font-medium"
+                  ? "bg-zinc-200 font-medium text-blue-700 dark:bg-zinc-700 dark:text-blue-300"
                   : "text-gray-600",
               )}
             >

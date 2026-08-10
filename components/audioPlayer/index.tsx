@@ -1,200 +1,285 @@
 "use client";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { cn } from "@/lib/utils";
 import {
   getActivePlayingLine,
   getAudioTimeForLine,
 } from "@/feature/speech/lib/getCurrentPlayingLine";
 
-import type { AudioPlayerProps } from "./types";
+import type { AudioPlayerProps, PlaybackIntent } from "./types";
+import { SKIP_SECONDS } from "./types";
 import { AudioControls } from "./components/AudioControls";
 import { AudioSlider } from "./components/AudioSlider";
 import { useAudioElement } from "./hook/useAudioElement";
 import { useAudioState } from "./hook/useAudioState";
+import { useNextTrackPreload } from "./hook/useNextTrackPreload";
 import { AudioText } from "./components/AudioText";
 
-export const AudioPlayer = ({ speechId, audioUrls, blocks }: AudioPlayerProps) => {
+export const AudioPlayer = ({ blocks }: AudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const shouldAutoPlayNextRef = useRef(false);
-  const pendingSeekRef = useRef<{ blockId: string; lineNumber: number } | null>(
-    null,
-  );
-  const [currentAudioUrl, setCurrentAudioUrl] = useState<string>(audioUrls[0] ?? "");
-  const activeAudioUrl = audioUrls.includes(currentAudioUrl)
-    ? currentAudioUrl
-    : (audioUrls[0] ?? "");
-  const activeBlock =
-    blocks.find((block) => block.audioUrl === activeAudioUrl) ?? null;
+  const intentRef = useRef<PlaybackIntent | null>(null);
+  const activeBlockIdRef = useRef<string | null>(null);
+  const lastBlockIdRef = useRef<string | null>(null);
+  const lastSrcRef = useRef<string | null>(null);
 
-  const { play, togglePlayPause, setSrc, setSpeed } = useAudioElement(audioRef);
-  const currentTrackIndex = audioUrls.indexOf(activeAudioUrl);
-  const previousAudioUrl =
-    currentTrackIndex > 0 ? audioUrls[currentTrackIndex - 1] : null;
-  const nextAudioUrl =
-    currentTrackIndex >= 0 ? (audioUrls[currentTrackIndex + 1] ?? null) : null;
+  const playlist = useMemo(
+    () => blocks.filter((block) => Boolean(block.audioUrl)),
+    [blocks],
+  );
+
+  const [currentBlockId, setCurrentBlockId] = useState<string | null>(
+    () => playlist[0]?.id ?? null,
+  );
+
+  const activeBlockId = useMemo(() => {
+    if (currentBlockId && playlist.some((block) => block.id === currentBlockId)) {
+      return currentBlockId;
+    }
+    return playlist[0]?.id ?? null;
+  }, [currentBlockId, playlist]);
+
+  activeBlockIdRef.current = activeBlockId;
+
+  const activeBlock =
+    playlist.find((block) => block.id === activeBlockId) ?? null;
+  const activeSrc = activeBlock?.audioUrl ?? null;
+
+  const currentTrackIndex = activeBlockId
+    ? playlist.findIndex((block) => block.id === activeBlockId)
+    : -1;
+  const previousBlockId =
+    currentTrackIndex > 0 ? playlist[currentTrackIndex - 1]?.id ?? null : null;
+  const nextBlock =
+    currentTrackIndex >= 0 ? (playlist[currentTrackIndex + 1] ?? null) : null;
+  const nextBlockId = nextBlock?.id ?? null;
+  const nextSrc = nextBlock?.audioUrl ?? null;
+
+  useNextTrackPreload(nextSrc);
+
+  const {
+    play,
+    togglePlayPause,
+    setSrc,
+    setSpeed,
+    seekTo,
+    skipBy,
+    applyPlaybackRate,
+  } = useAudioElement(audioRef);
+
+  const fulfillIntent = useCallback(() => {
+    const audio = audioRef.current;
+    const intent = intentRef.current;
+    if (!audio || !intent) return;
+
+    applyPlaybackRate();
+
+    if (intent.kind === "play-from-start") {
+      intentRef.current = null;
+      seekTo(0);
+      void play();
+      return;
+    }
+
+    if (intent.kind === "preserve-position") {
+      intentRef.current = null;
+      seekTo(intent.position);
+      if (intent.wasPlaying) {
+        void play();
+      }
+      return;
+    }
+
+    if (intent.kind === "seek-line") {
+      const block =
+        blocks.find((item) => item.id === intent.blockId) ?? activeBlock;
+      if (!block || block.id !== activeBlockIdRef.current) {
+        return;
+      }
+
+      const seekTime = getAudioTimeForLine(
+        block.lines,
+        intent.lineNumber,
+        Number.isFinite(audio.duration) ? audio.duration : undefined,
+      );
+      intentRef.current = null;
+      if (seekTime == null) {
+        void play();
+        return;
+      }
+
+      seekTo(seekTime);
+      void play();
+    }
+  }, [activeBlock, applyPlaybackRate, blocks, play, seekTo]);
+
+  const handleMediaReady = useCallback(() => {
+    applyPlaybackRate();
+    fulfillIntent();
+  }, [applyPlaybackRate, fulfillIntent]);
+
+  const selectBlock = useCallback(
+    (blockId: string, intent: PlaybackIntent) => {
+      intentRef.current = intent;
+      setCurrentBlockId(blockId);
+    },
+    [],
+  );
 
   const handleAudioEnded = useCallback(() => {
-    const currentIndex = audioUrls.indexOf(activeAudioUrl);
-    const upcomingAudioUrl = audioUrls[currentIndex + 1];
-    if (!upcomingAudioUrl) return;
+    const index = playlist.findIndex(
+      (block) => block.id === activeBlockIdRef.current,
+    );
+    const upcoming = playlist[index + 1];
+    if (!upcoming) return;
 
-    shouldAutoPlayNextRef.current = true;
-    setCurrentAudioUrl(upcomingAudioUrl);
-  }, [activeAudioUrl, audioUrls]);
+    selectBlock(upcoming.id, { kind: "play-from-start" });
+  }, [playlist, selectBlock]);
 
-  const { isReady, duration, progress, error, isPlaying, speed } = useAudioState(
-    audioRef,
-    handleAudioEnded,
-  );
-
-  // Keep highlight in sync with the active track; reset immediately on URL change
-  // (before loadstart) so we don't flash the previous track's end progress.
-  const [highlightTrackUrl, setHighlightTrackUrl] = useState(activeAudioUrl);
-  if (highlightTrackUrl !== activeAudioUrl) {
-    setHighlightTrackUrl(activeAudioUrl);
-  }
-  const progressForHighlight =
-    highlightTrackUrl !== activeAudioUrl ? 0 : progress;
-
-  const seekAndPlay = useCallback(
-    (timeSeconds: number) => {
-      const audio = audioRef.current;
-      if (!audio) return;
-
-      const maxTime = Number.isFinite(audio.duration)
-        ? audio.duration
-        : timeSeconds;
-      audio.currentTime = Math.min(
-        Math.max(timeSeconds, 0),
-        Math.max(maxTime, 0),
-      );
-      void play();
-    },
-    [play],
-  );
+  const {
+    isReady,
+    isBuffering,
+    duration,
+    progress,
+    error,
+    isPlaying,
+    speed,
+  } = useAudioState(audioRef, handleAudioEnded, handleMediaReady);
 
   const handleLineClick = useCallback(
     (blockId: string, lineNumber: number) => {
       const block = blocks.find((item) => item.id === blockId);
       if (!block?.audioUrl) return;
 
-      if (block.audioUrl !== activeAudioUrl) {
-        pendingSeekRef.current = { blockId, lineNumber };
-        shouldAutoPlayNextRef.current = true;
-        setCurrentAudioUrl(block.audioUrl);
+      if (block.id !== activeBlockId) {
+        selectBlock(blockId, { kind: "seek-line", blockId, lineNumber });
         return;
       }
 
-      const seekTime = getAudioTimeForLine(block.lines, lineNumber, duration);
+      const seekTime = getAudioTimeForLine(
+        block.lines,
+        lineNumber,
+        duration > 0 ? duration : undefined,
+      );
       if (seekTime == null) return;
 
-      seekAndPlay(seekTime);
+      seekTo(seekTime);
+      void play();
     },
-    [activeAudioUrl, blocks, duration, seekAndPlay],
+    [activeBlockId, blocks, duration, play, seekTo, selectBlock],
   );
 
   const handlePreviousTrack = useCallback(() => {
-    if (!previousAudioUrl) return;
-    shouldAutoPlayNextRef.current = true;
-    setCurrentAudioUrl(previousAudioUrl);
-  }, [previousAudioUrl]);
+    if (!previousBlockId) return;
+    selectBlock(previousBlockId, { kind: "play-from-start" });
+  }, [previousBlockId, selectBlock]);
 
   const handleNextTrack = useCallback(() => {
-    if (!nextAudioUrl) return;
-    shouldAutoPlayNextRef.current = true;
-    setCurrentAudioUrl(nextAudioUrl);
-  }, [nextAudioUrl]);
+    if (!nextBlockId) return;
+    selectBlock(nextBlockId, { kind: "play-from-start" });
+  }, [nextBlockId, selectBlock]);
 
+  const handleSkipBackward = useCallback(() => {
+    skipBy(-SKIP_SECONDS);
+  }, [skipBy]);
+
+  const handleSkipForward = useCallback(() => {
+    skipBy(SKIP_SECONDS);
+  }, [skipBy]);
+
+  // Load / refresh media when the active block or its signed URL changes
   useEffect(() => {
-    if (!activeAudioUrl) return;
+    if (!activeBlockId || !activeSrc) return;
 
-    setSrc(activeAudioUrl);
-
-    if (shouldAutoPlayNextRef.current) {
-      shouldAutoPlayNextRef.current = false;
-      // Line-click seek waits for loadedmetadata before playing
-      if (!pendingSeekRef.current) {
-        void play();
-      }
+    const previousBlockIdLoaded = lastBlockIdRef.current;
+    const previousSrc = lastSrcRef.current;
+    if (previousSrc === activeSrc && previousBlockIdLoaded === activeBlockId) {
+      return;
     }
-  }, [activeAudioUrl, play, setSrc]);
 
-  useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    const isSameBlockUrlRefresh =
+      previousBlockIdLoaded === activeBlockId &&
+      previousSrc !== null &&
+      previousSrc !== activeSrc &&
+      intentRef.current === null;
 
-    const onLoadedMetadata = () => {
-      const pendingSeek = pendingSeekRef.current;
-      if (!pendingSeek) return;
+    if (isSameBlockUrlRefresh && audio) {
+      intentRef.current = {
+        kind: "preserve-position",
+        position: audio.currentTime,
+        wasPlaying: !audio.paused && !audio.ended,
+      };
+    }
 
-      pendingSeekRef.current = null;
-      const block = blocks.find((item) => item.id === pendingSeek.blockId);
-      if (!block) return;
+    lastBlockIdRef.current = activeBlockId;
+    lastSrcRef.current = activeSrc;
+    setSrc(activeSrc);
 
-      const seekTime = getAudioTimeForLine(
-        block.lines,
-        pendingSeek.lineNumber,
-        audio.duration,
-      );
-      if (seekTime == null) return;
+    // Cached media may already expose metadata before the event listener runs
+    if (
+      audio &&
+      audio.readyState >= HTMLMediaElement.HAVE_METADATA &&
+      intentRef.current
+    ) {
+      fulfillIntent();
+    }
+  }, [activeBlockId, activeSrc, fulfillIntent, setSrc]);
 
-      const maxTime = Number.isFinite(audio.duration)
-        ? audio.duration
-        : seekTime;
-      audio.currentTime = Math.min(
-        Math.max(seekTime, 0),
-        Math.max(maxTime, 0),
-      );
-      void play();
-    };
+  // Keep currentBlockId aligned when playlist shrinks / regenerates
+  useEffect(() => {
+    if (playlist.length === 0) {
+      setCurrentBlockId(null);
+      return;
+    }
 
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
-    return () => {
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-    };
-  }, [play, activeAudioUrl, blocks]);
+    if (
+      currentBlockId &&
+      playlist.some((block) => block.id === currentBlockId)
+    ) {
+      return;
+    }
+
+    setCurrentBlockId(playlist[0].id);
+  }, [currentBlockId, playlist]);
+
+  const lineTimingDuration =
+    duration > 0
+      ? duration
+      : activeBlock?.duration && activeBlock.duration > 0
+        ? activeBlock.duration
+        : undefined;
 
   const activeLineNumber = useMemo(() => {
     if (!activeBlock) {
       return null;
     }
 
+    // Avoid using a previous track's progress against a new track before metadata lands
+    if (duration <= 0 && isBuffering) {
+      return null;
+    }
+
     const safeProgress =
-      !isReady || (duration > 0 && progressForHighlight > duration + 0.25)
-        ? 0
-        : progressForHighlight;
+      Number.isFinite(progress) &&
+      !(duration > 0 && progress > duration + 0.5)
+        ? progress
+        : 0;
 
     return getActivePlayingLine(
       activeBlock.lines,
       safeProgress,
-      duration || undefined,
+      lineTimingDuration,
     );
-  }, [activeBlock, progressForHighlight, duration, isReady]);
+  }, [activeBlock, duration, isBuffering, lineTimingDuration, progress]);
+
+  const hasPlaylist = playlist.length > 0;
 
   return (
-    <>
-      <div>
-        <ul>
-          {audioUrls.map((url) => (
-            <li
-              key={url}
-              className={cn(
-                "text-sm text-gray-500",
-                activeAudioUrl === url && "text-blue-500",
-              )}
-              onClick={() => setCurrentAudioUrl(url)}
-            >
-              {url.split("/").pop()}
-            </li>
-          ))}
-        </ul>
-      </div>
-
+    <div className="space-y-4">
       {blocks.map((block) => (
         <AudioText
           key={block.id}
-          speechId={speechId}
           block={block}
           isActiveBlock={block.id === activeBlock?.id}
           activeLineNumber={
@@ -204,21 +289,29 @@ export const AudioPlayer = ({ speechId, audioUrls, blocks }: AudioPlayerProps) =
         />
       ))}
 
-      <audio ref={audioRef} />
+      <audio ref={audioRef} preload="auto" />
 
-      {error && audioUrls.length > 0 && <div>{error.message}</div>}
+      {error && hasPlaylist && (
+        <div className="text-sm text-red-600 dark:text-red-400">
+          {error.message}
+        </div>
+      )}
 
-      {!isReady && audioUrls.length > 0 && <div>Loading...</div>}
+      {hasPlaylist && !isReady && (
+        <div className="text-sm text-zinc-500">Loading audio…</div>
+      )}
 
-      {isReady && audioUrls.length > 0 && (
-        <section>
+      {hasPlaylist && isReady && (
+        <section className="space-y-2">
+          {isBuffering && (
+            <p className="text-xs text-zinc-500">Buffering…</p>
+          )}
+
           <AudioSlider
             progress={progress}
             duration={duration}
             onSeekCommit={(value) => {
-              if (audioRef.current) {
-                audioRef.current.currentTime = value;
-              }
+              seekTo(value);
             }}
           />
 
@@ -228,12 +321,14 @@ export const AudioPlayer = ({ speechId, audioUrls, blocks }: AudioPlayerProps) =
             onTogglePlayPause={togglePlayPause}
             onPrevious={handlePreviousTrack}
             onNext={handleNextTrack}
+            onSkipBackward={handleSkipBackward}
+            onSkipForward={handleSkipForward}
             onSpeedChange={setSpeed}
-            isPreviousDisabled={!previousAudioUrl}
-            isNextDisabled={!nextAudioUrl}
+            isPreviousDisabled={!previousBlockId}
+            isNextDisabled={!nextBlockId}
           />
         </section>
       )}
-    </>
+    </div>
   );
 };

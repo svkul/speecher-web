@@ -1,6 +1,14 @@
 "use client";
 
-import { Pause, Play, StepBack, StepForward, Gauge } from "lucide-react";
+import {
+  Gauge,
+  Pause,
+  Play,
+  Redo2,
+  StepBack,
+  StepForward,
+  Undo2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { SPEEDS } from "../types";
+import { SKIP_SECONDS, SPEEDS } from "../types";
 
 type AudioControlsProps = {
   currentSpeed: number;
@@ -20,6 +28,8 @@ type AudioControlsProps = {
   onTogglePlayPause: () => Promise<void>;
   onPrevious: () => void;
   onNext: () => void;
+  onSkipBackward: () => void;
+  onSkipForward: () => void;
   onSpeedChange: (speed: number) => void;
   isPreviousDisabled: boolean;
   isNextDisabled: boolean;
@@ -31,27 +41,73 @@ export const AudioControls = ({
   onTogglePlayPause,
   onPrevious,
   onNext,
+  onSkipBackward,
+  onSkipForward,
   onSpeedChange,
   isPreviousDisabled,
-  isNextDisabled
+  isNextDisabled,
 }: AudioControlsProps) => {
   return (
-    <div className="flex items-center justify-center gap-2">
-      <Button size="icon-sm" disabled={isPreviousDisabled} onClick={onPrevious}>
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      <Button
+        size="icon-sm"
+        variant="outline"
+        disabled={isPreviousDisabled}
+        onClick={onPrevious}
+        aria-label="Previous block"
+      >
         <StepBack />
       </Button>
 
-      <Button onClick={onTogglePlayPause} size="icon-lg">
+      <Button
+        size="icon-sm"
+        variant="outline"
+        onClick={onSkipBackward}
+        aria-label={`Skip back ${SKIP_SECONDS} seconds`}
+      >
+        <Undo2 />
+      </Button>
+
+      <Button
+        onClick={onTogglePlayPause}
+        size="icon-lg"
+        aria-label={isPlaying ? "Pause" : "Play"}
+      >
         {isPlaying ? <Pause /> : <Play />}
       </Button>
 
-      <Button size="icon-sm" disabled={isNextDisabled} onClick={onNext}>
+      <Button
+        size="icon-sm"
+        variant="outline"
+        onClick={onSkipForward}
+        aria-label={`Skip forward ${SKIP_SECONDS} seconds`}
+      >
+        <Redo2 />
+      </Button>
+
+      <Button
+        size="icon-sm"
+        variant="outline"
+        disabled={isNextDisabled}
+        onClick={onNext}
+        aria-label="Next block"
+      >
         <StepForward />
       </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon-sm" className="relative"><Gauge /> <span className="absolute top-[-2px] right-[-2px] text-[8px]">{currentSpeed}x</span></Button>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="relative"
+            aria-label="Playback speed"
+          >
+            <Gauge />
+            <span className="absolute top-[-2px] right-[-2px] text-[8px]">
+              {currentSpeed}x
+            </span>
+          </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
@@ -59,7 +115,12 @@ export const AudioControls = ({
             <DropdownMenuLabel>Speed</DropdownMenuLabel>
 
             {SPEEDS.map((speed) => (
-              <DropdownMenuItem key={speed.value} onClick={() => onSpeedChange(speed.value)}>{speed.label}</DropdownMenuItem>
+              <DropdownMenuItem
+                key={speed.value}
+                onClick={() => onSpeedChange(speed.value)}
+              >
+                {speed.label}
+              </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
         </DropdownMenuContent>

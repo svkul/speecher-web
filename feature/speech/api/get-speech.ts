@@ -6,6 +6,9 @@ export interface SpeechBlockResponse {
   title: string;
   text: string;
   audioUrl: string | null;
+  duration: number | null;
+  audioStatus?: "IDLE" | "PENDING" | "PROCESSING" | "READY" | "FAILED";
+  generationError?: string | null;
   lines: {
     line: number;
     text: string;

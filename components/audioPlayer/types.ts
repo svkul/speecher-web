@@ -1,13 +1,10 @@
 import type { SpeechBlockResponse } from "@/feature/speech/api/get-speech";
 
 export interface AudioPlayerProps {
-  speechId: string;
-  audioUrls: string[];
   blocks: SpeechBlockResponse[];
 }
 
 export type AudioTextProps = {
-  speechId: string;
   block: SpeechBlockResponse;
   isActiveBlock: boolean;
   activeLineNumber: number | null;
@@ -18,18 +15,38 @@ export type AudioElementHook = {
   play: () => Promise<void>;
   pause: () => void;
   setSpeed: (speed: number) => void;
+  getSpeed: () => number;
   togglePlayPause: () => Promise<void>;
-  setSrc: (url: string) => void;
+  setSrc: (url: string) => boolean;
+  seekTo: (timeSeconds: number) => void;
+  skipBy: (deltaSeconds: number) => void;
+  applyPlaybackRate: () => void;
 };
 
 export type AudioState = {
+  /** True after the first track has loaded metadata; stays true across track switches. */
   isReady: boolean;
+  /** True while a new source is loading (including between playlist tracks). */
+  isBuffering: boolean;
   duration: number;
   progress: number;
   isPlaying: boolean;
   speed: number;
   error: Error | null;
 };
+
+export type PlaybackIntent =
+  | { kind: "play-from-start" }
+  | { kind: "seek-line"; blockId: string; lineNumber: number }
+  | {
+      kind: "preserve-position";
+      position: number;
+      wasPlaying: boolean;
+    };
+
+export const SPEED_STORAGE_KEY = "speecher.audio.playbackRate";
+
+export const SKIP_SECONDS = 5;
 
 export const SPEEDS = [
   {

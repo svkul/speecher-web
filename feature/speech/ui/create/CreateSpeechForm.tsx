@@ -346,10 +346,14 @@ export function CreateSpeechForm({
               <textarea
                 id="ttsStyle"
                 rows={3}
-                placeholder="Optional SSML or speaking style notes"
+                placeholder="Speaking style for Gemini voices (e.g. Speak calmly and clearly)"
                 className="w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
                 {...register("ttsStyle")}
               />
+              <p className="text-xs text-muted-foreground">
+                Applied as a Gemini style prompt. Ignored for classic SSML voices
+                so line timestamps stay accurate.
+              </p>
             </div>
           </div>
         )}
